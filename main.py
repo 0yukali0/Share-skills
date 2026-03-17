@@ -63,7 +63,6 @@ def greet_ollama(message: str, model: str = "qwen2.5-coder:3b") -> str:
         messages.append({"role": "assistant", "content": res})
         print(f"[AI] {res}")
         if res.strip().startswith("Finished:"):
-            print("[AI] Task finished.")
             break
         command = res.strip().split("Execute command:")[1].strip()
         command_result = os.popen(command).read()
