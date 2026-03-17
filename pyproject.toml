@@ -1,0 +1,18 @@
+[project]
+name = "openclaw-like-system"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "gradio>=6.9.0",
+    "openai>=2.28.0",
+    "openrouter>=0.7.11",
+    "requests>=2.32.5",
+]
+
+[dependency-groups]
+dev = [
+    "isort>=8.0.1",
+    "ruff>=0.15.6",
+]
