@@ -9,9 +9,10 @@ from openrouter import OpenRouter
 messages: List[Dict[str, str]] = [
     {
         "role": "system",
-        "content": open("agent.md").read(),
+        "content": open("agent.md").read() + open("skill.md").read(),
     }
 ]
+
 
 def call_model(message: str, model: str, provider: str = "ollama") -> str:
     if provider == "ollama":
@@ -45,7 +46,7 @@ def unload_model(model: str):
     )
 
 
-def greet_ollama(message: str, model: str = "llama3") -> str:
+def greet_ollama(message: str, model: str = "qwen2.5-coder:3b") -> str:
     ensure_model_exists(model)
     # check local allama server start a llm instance based on model parameter
     while True:
