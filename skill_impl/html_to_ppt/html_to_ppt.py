@@ -1,23 +1,35 @@
-#!/usr/bin/env python3
 """Convert HTML to PowerPoint (.pptx).
 
 Usage:
-    python html_to_ppt.py --input page.html --output slides.pptx
-    python html_to_ppt.py --input page.html          # output: page.pptx
-    cat page.html | python html_to_ppt.py --input - --output slides.pptx
+    flyte run --local html_to_ppt.py html_to_ppt --input page.html --output slides.pptx
+    flyte run --local html_to_ppt.py html_to_ppt --input page.html          # output: page.pptx
+    cat page.html | flyte run --local html_to_ppt.py html_to_ppt --input - --output slides.pptx
 """
 
-import argparse
-import sys
-import os
-from pathlib import Path
-
-from bs4 import BeautifulSoup
+import flyte
+from typing import List, Optional
 from pptx import Presentation
-from pptx.util import Inches, Pt
+
+env = flyte.TaskEnvironment("simple-env")
+html_parser_env = flyte.TaskEnvironment(
+    name="html_parser",
+    image=flyte.Image.from_debian_base(python_version=(3, 13)).with_apt_packages(
+        "beautifulsoup4>=4.14.3"
+    ),
+)
+
+html_to_ppt_convertor_env = flyte.TaskEnvironment(
+    name="html_to_ppt",
+    image=flyte.Image.from_debian_base(python_version=(3, 13)).with_apt_packages(
+        "python-pptx>=1.0.2"
+    ),
+)
 
 
 def load_html(input_arg: str) -> str:
+    import sys
+    from pathlib import Path
+
     """Load HTML from a file path or stdin (-)."""
     if input_arg == "-":
         return sys.stdin.read()
@@ -29,13 +41,18 @@ def load_html(input_arg: str) -> str:
 
 
 def default_output_path(input_arg: str) -> str:
+    from pathlib import Path
+
     """Derive output path from input file path."""
     if input_arg == "-":
         return "output.pptx"
     return str(Path(input_arg).with_suffix(".pptx"))
 
 
-def parse_slides(html: str) -> list[dict]:
+@html_parser_env.task
+def parse_slides(html: str) -> List[dict]:
+    from bs4 import BeautifulSoup
+
     """Parse HTML into a list of slide dicts with title, body, and images."""
     soup = BeautifulSoup(html, "lxml")
     slides = []
@@ -98,78 +115,49 @@ def parse_slides(html: str) -> list[dict]:
     return slides
 
 
-def add_slide(
-    prs: Presentation, title: str, body: list[str], images: list[str]
-) -> None:
-    """Add a single slide to the presentation."""
-    layout = prs.slide_layouts[1]  # Title and Content
-    slide = prs.slides.add_slide(layout)
+@html_to_ppt_convertor_env.task
+def html_to_ppt(src: str = "", output: Optional[str] = None) -> None:
+    import sys
+    from pathlib import Path
+    from pptx.util import Inches
 
-    # Set title
-    slide.shapes.title.text = title
-
-    # Set body text
-    body_placeholder = slide.placeholders[1]
-    tf = body_placeholder.text_frame
-    tf.clear()
-    for i, line in enumerate(body):
-        if i == 0:
-            tf.paragraphs[0].text = line
-        else:
-            p = tf.add_paragraph()
-            p.text = line
-
-    # Embed images
-    img_top = Inches(5)
-    img_left = Inches(0.5)
-    for src in images:
-        path = Path(src)
-        if not path.exists():
-            print(f"Warning: image not found, skipping: {src}", file=sys.stderr)
-            continue
-        try:
-            slide.shapes.add_picture(str(path), img_left, img_top, width=Inches(3))
-            img_left += Inches(3.5)
-        except Exception as e:
-            print(f"Warning: could not embed image {src}: {e}", file=sys.stderr)
-
-
-def convert(html: str, output_path: str) -> None:
     """Convert HTML string to a .pptx file at output_path."""
     slides_data = parse_slides(html)
     prs = Presentation()
 
-    for slide in slides_data:
-        add_slide(prs, slide["title"], slide["body"], slide["images"])
+    for slide_data in slides_data:
+        layout = prs.slide_layouts[1]  # Title and Content
+        slide = prs.slides.add_slide(layout)
+
+        # Set title
+        slide.shapes.title.text = slide_data["title"]
+
+        # Set body text
+        body_placeholder = slide.placeholders[1]
+        tf = body_placeholder.text_frame
+        tf.clear()
+        for i, line in enumerate(slide_data["body"]):
+            if i == 0:
+                tf.paragraphs[0].text = line
+            else:
+                p = tf.add_paragraph()
+                p.text = line
+
+        # Embed images
+        img_top = Inches(5)
+        img_left = Inches(0.5)
+        for src in slide_data["images"]:
+            path = Path(src)
+            if not path.exists():
+                print(f"Warning: image not found, skipping: {src}", file=sys.stderr)
+                continue
+            try:
+                slide.shapes.add_picture(str(path), img_left, img_top, width=Inches(3))
+                img_left += Inches(3.5)
+            except Exception as e:
+                print(f"Warning: could not embed image {src}: {e}", file=sys.stderr)
 
     prs.save(output_path)
     print(
         f"Saved: {output_path} ({len(slides_data)} slide{'s' if len(slides_data) != 1 else ''})"
     )
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Convert an HTML file to a PowerPoint presentation (.pptx)."
-    )
-    parser.add_argument(
-        "--input",
-        "-i",
-        required=True,
-        help="Path to HTML file, or '-' to read from stdin.",
-    )
-    parser.add_argument(
-        "--output",
-        "-o",
-        default=None,
-        help="Output .pptx file path. Defaults to input filename with .pptx extension.",
-    )
-    args = parser.parse_args()
-
-    output = args.output or default_output_path(args.input)
-    html = load_html(args.input)
-    convert(html, output)
-
-
-if __name__ == "__main__":
-    main()

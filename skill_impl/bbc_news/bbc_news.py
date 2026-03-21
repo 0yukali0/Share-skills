@@ -2,11 +2,11 @@ from typing import List
 
 import flyte
 
-env = flyte.TaskEnvironment(name="simple_env")
+env = flyte.TaskEnvironment(name="bbc_news_env")
 bbc_news_env = flyte.TaskEnvironment(
-    name="hello_env",
+    name="bbc_news_env",
     image=flyte.Image.from_debian_base(python_version=(3, 13)).with_apt_packages(
-        "requests"
+        "requests>=2.32.5"
     ),
 )
 
@@ -34,7 +34,7 @@ def news_titles(context: str) -> List[str]:
 
 
 @env.task
-def main() -> str:
+def bbc_news() -> str:
     news_xml = bbc_news()
     titles = news_titles(news_xml)
     res = "\n"
