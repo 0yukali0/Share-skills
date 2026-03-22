@@ -6,7 +6,12 @@ Usage:
 
 import flyte
 
-env = flyte.TaskEnvironment(name="letex_to_pdf_env").with_apt_packages("texlive-xetex")
+env = flyte.TaskEnvironment(
+    name="letex_to_pdf_env",
+    image=flyte.Image.from_debian_base(
+        name="letex_to_pdf_env", python_version=(3, 13)
+    ).with_apt_packages("texlive-xetex"),
+)
 
 
 @env.task

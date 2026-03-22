@@ -6,8 +6,9 @@ Usage:
     cat page.html | flyte run --local html_to_ppt.py html_to_ppt --input - --output slides.pptx
 """
 
-import flyte
 from typing import List, Optional
+
+import flyte
 from pptx import Presentation
 
 env = flyte.TaskEnvironment("simple-env")
@@ -119,10 +120,11 @@ def parse_slides(html: str) -> List[dict]:
 def html_to_ppt(src: str = "", output: Optional[str] = None) -> None:
     import sys
     from pathlib import Path
+
     from pptx.util import Inches
 
     """Convert HTML string to a .pptx file at output_path."""
-    slides_data = parse_slides(html)
+    slides_data = parse_slides(src)
     prs = Presentation()
 
     for slide_data in slides_data:
@@ -157,7 +159,7 @@ def html_to_ppt(src: str = "", output: Optional[str] = None) -> None:
             except Exception as e:
                 print(f"Warning: could not embed image {src}: {e}", file=sys.stderr)
 
-    prs.save(output_path)
+    prs.save(output)
     print(
-        f"Saved: {output_path} ({len(slides_data)} slide{'s' if len(slides_data) != 1 else ''})"
+        f"Saved: {output} ({len(slides_data)} slide{'s' if len(slides_data) != 1 else ''})"
     )
