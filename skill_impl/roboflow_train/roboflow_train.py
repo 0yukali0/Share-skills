@@ -31,12 +31,12 @@ train_env = flyte.TaskEnvironment(
         "numpy>=1.24.0",
     ),
     resources=flyte.Resources(
-        cpu=("2", "4"),        # Request 2 cores, allow up to 4 cores for scaling
-        memory=("2Gi", "12Gi"), # Request 2 GiB, allow up to 12 GiB for large datasets
-        disk="50Gi",           # 50 GiB ephemeral storage for checkpoints
-        shm="8Gi",              # 8 GiB shared memory for efficient data loading
+        cpu=("2", "4"),  # Request 2 cores, allow up to 4 cores for scaling
+        memory=("2Gi", "12Gi"),  # Request 2 GiB, allow up to 12 GiB for large datasets
+        disk="50Gi",  # 50 GiB ephemeral storage for checkpoints
+        shm="8Gi",  # 8 GiB shared memory for efficient data loading
         gpu=1,
-    )
+    ),
 )
 
 
@@ -109,8 +109,8 @@ class ObjectDetector(pl.LightningModule):
 
     def __init__(self, num_classes: int, lr: float = 1e-4):
         from torchvision.models.detection import (
-            fasterrcnn_resnet50_fpn,
             FasterRCNN_ResNet50_FPN_Weights,
+            fasterrcnn_resnet50_fpn,
         )
         from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
