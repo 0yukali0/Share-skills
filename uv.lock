@@ -778,6 +778,18 @@ wheels = [
 ]
 
 [[package]]
+name = "flyteplugins-ray"
+version = "2.0.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "flyte" },
+    { name = "ray", extra = ["default"] },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/42/3f/d1cb93d3d74202326da4e173af2e6419a8b819d87b87d09a204f66cbef89/flyteplugins_ray-2.0.10-py3-none-any.whl", hash = "sha256:a746b3bd401d678dfd45d10b01ca97b5a5222a62c4a18f2594bcec2a665933f7", size = 3353, upload-time = "2026-03-23T18:11:26.316Z" },
+]
+
+[[package]]
 name = "fonttools"
 version = "4.62.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2091,6 +2103,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "flyte", extra = ["tui"] },
+    { name = "flyteplugins-ray" },
     { name = "fpdf2" },
     { name = "gradio" },
     { name = "lxml" },
@@ -2115,6 +2128,7 @@ dev = [
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.3" },
     { name = "flyte", extras = ["tui"], specifier = ">=2.0.9" },
+    { name = "flyteplugins-ray", specifier = ">=2.0.10" },
     { name = "fpdf2", specifier = ">=2.8.7" },
     { name = "gradio", specifier = ">=6.9.0" },
     { name = "lxml", specifier = ">=6.0.2" },
@@ -2989,6 +3003,22 @@ all = [
     { name = "uvicorn", extra = ["standard"] },
     { name = "virtualenv" },
     { name = "watchfiles" },
+]
+default = [
+    { name = "aiohttp" },
+    { name = "aiohttp-cors" },
+    { name = "colorful" },
+    { name = "grpcio" },
+    { name = "opencensus" },
+    { name = "opentelemetry-exporter-prometheus" },
+    { name = "opentelemetry-proto" },
+    { name = "opentelemetry-sdk" },
+    { name = "prometheus-client" },
+    { name = "py-spy" },
+    { name = "pydantic" },
+    { name = "requests" },
+    { name = "smart-open" },
+    { name = "virtualenv" },
 ]
 
 [[package]]

@@ -1,14 +1,18 @@
-"""Train an object detection model on a Roboflow COCO dataset using Ray Train + PyTorch Lightning.
+"""Train an object detection model on a Roboflow COCO dataset using Flyte + Ray Train + PyTorch Lightning.
 
 Inputs:
     roboflow_url: str        - HTTPS URL to a Roboflow COCO dataset zip, or a local directory path
     accuracy_request: float  - minimum mAP@0.5 required (e.g. 0.5 = 50%)
+    output: str              - output path for model.pt (default: model.pt)
 
 Output:
     Path to model.pt if mAP@0.5 >= accuracy_request, else None
 
 Usage:
-    python roboflow_ray_train.py
+    flyte run --local skill_impl/roboflow_ray_train/roboflow_ray_train.py roboflow_ray_train \\
+        --roboflow_url <url_or_path> \\
+        --accuracy_request <float> \\
+        --output model.pt
 """
 
 import json
@@ -18,12 +22,44 @@ import zipfile
 from pathlib import Path
 from typing import Optional
 
+import flyte
 import requests
 import torch
+from flyteplugins.ray import RayJobConfig, WorkerNodeConfig
 from torch.utils.data import DataLoader, Dataset
 
 
-# ── Driver-only helpers ──────────────────────────────────────────────────────
+# ── Flyte task environment ────────────────────────────────────────────────────
+
+train_env = flyte.TaskEnvironment(
+    name="roboflow-ray-detector",
+    image=flyte.Image.from_debian_base(name="ray", python_version=(3, 13)).with_pip_packages(
+        "torch>=2.0.0",
+        "torchvision>=0.15.0",
+        "pytorch-lightning>=2.0.0",
+        "ray[default]>=2.0.0",
+        "flyteplugins-ray",
+        "Pillow>=10.0.0",
+        "requests>=2.32.0",
+        "numpy>=1.24.0",
+        "pandas",
+        "pyarrow"
+    ),
+    resources=flyte.Resources(
+        cpu=("2", "4"),
+        memory=("4Gi", "22Gi"),
+        disk="50Gi",
+        shm="8Gi",
+    ),
+)
+
+ray_config = RayJobConfig(
+    worker_node_config=[WorkerNodeConfig(group_name="workers", replicas=2)],
+    shutdown_after_job_finishes=True,
+)
+
+
+# ── Driver-only helpers ───────────────────────────────────────────────────────
 # These run only on the driver process. They are NOT pickled for Ray workers.
 
 
@@ -182,15 +218,16 @@ def _compute_map(
     return sum(all_ap) / len(all_ap) if all_ap else 0.0
 
 
-# ── Public entry point ───────────────────────────────────────────────────────
+# ── Flyte task ────────────────────────────────────────────────────────────────
 
 
-def train_model(
+@train_env.task
+def roboflow_ray_train(
     roboflow_url: str,
     accuracy_request: float,
     output: Optional[str] = "model.pt",
 ) -> Optional[str]:
-    """Download a Roboflow COCO dataset, train with Ray Train + PyTorch Lightning on CPU,
+    """Download a Roboflow COCO dataset, train with Flyte + Ray Train + PyTorch Lightning on CPU,
     and return the path to model.pt if mAP@0.5 >= accuracy_request, else None."""
     import os
 
@@ -254,10 +291,10 @@ def train_model(
         )
 
         # ── Step 5: Define train_loop_per_worker as a closure ─────────────────
-        # Defined inside train_model so cloudpickle serialises it as a closure
-        # (full bytecode), not by module reference. This is required because
-        # roboflow_ray_train.py is NOT present in the Ray worker environment.
-        # All classes used by workers are also defined locally here.
+        # Defined inside roboflow_ray_train so cloudpickle serialises it as a
+        # closure (full bytecode), not by module reference. This is required
+        # because roboflow_ray_train.py is NOT present in the Ray worker
+        # environment. All classes used by workers are also defined locally here.
 
         def train_loop_per_worker(config):
             import json
@@ -284,7 +321,6 @@ def train_model(
             _nc = config["num_classes"]
             _epochs = config.get("max_epochs", 10)
 
-            # Local dataset class — captured in closure, no module import needed
             class _COCODetectionDataset(Dataset):
                 def __init__(self, img_dir, annotations_file):
                     self.img_dir = _Path(img_dir)
@@ -328,7 +364,6 @@ def train_model(
             def _cf(batch):
                 return tuple(zip(*batch))
 
-            # Local Lightning module — captured in closure
             class _ObjectDetector(pl.LightningModule):
                 def __init__(self, num_classes: int, lr: float = 1e-4):
                     from torchvision.models.detection import (
@@ -361,7 +396,6 @@ def train_model(
                 def configure_optimizers(self):
                     return torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
 
-            # Build dataloader and model
             train_ds = _COCODetectionDataset(_train_img_dir, _train_ann)
             train_loader = DataLoader(
                 train_ds,
@@ -372,7 +406,6 @@ def train_model(
             )
             detector = _ObjectDetector(num_classes=_nc)
 
-            # Train with Ray + Lightning (single worker)
             trainer = pl.Trainer(
                 max_epochs=_epochs,
                 devices="auto",
@@ -385,7 +418,6 @@ def train_model(
             trainer = prepare_trainer(trainer)
             trainer.fit(detector, train_loader)
 
-            # Save the final state dict as the checkpoint
             ckpt_dir = tempfile.mkdtemp()
             torch.save(
                 detector.model.state_dict(),
@@ -397,7 +429,8 @@ def train_model(
             )
 
         # ── Step 6: Launch Ray TorchTrainer ───────────────────────────────────
-        ray.init(ignore_reinit_error=True)
+        if not ray.is_initialized():
+            ray.init()
         ray_trainer = TorchTrainer(
             train_loop_per_worker=train_loop_per_worker,
             scaling_config=ScalingConfig(num_workers=1, use_gpu=False),
@@ -443,22 +476,5 @@ def train_model(
         return None
 
 
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="Train Faster RCNN with Ray Train + Lightning"
-    )
-    parser.add_argument(
-        "--roboflow_url", required=True, help="Roboflow COCO zip URL or local path"
-    )
-    parser.add_argument(
-        "--accuracy_request", type=float, required=True, help="Minimum mAP@0.5"
-    )
-    parser.add_argument(
-        "--output", default="model.pt", help="Output model path (default: model.pt)"
-    )
-    args = parser.parse_args()
-
-    result = train_model(args.roboflow_url, args.accuracy_request, args.output)
-    print(result)
+# Attach RayJobConfig for Kubernetes/KubeRay deployment via Flyte
+roboflow_ray_train.plugin_config = ray_config

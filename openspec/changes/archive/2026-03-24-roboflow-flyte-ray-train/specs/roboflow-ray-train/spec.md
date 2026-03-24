@@ -1,13 +1,4 @@
-### Requirement: Accept Roboflow COCO dataset input
-The skill SHALL accept a `roboflow_url` parameter that is either an HTTPS URL to a Roboflow COCO zip file or a local filesystem path to an extracted dataset directory.
-
-#### Scenario: URL input
-- **WHEN** `roboflow_url` starts with `http://` or `https://`
-- **THEN** the system downloads and extracts the zip before training
-
-#### Scenario: Local path input
-- **WHEN** `roboflow_url` is a local path
-- **THEN** the system uses that directory directly without downloading
+## MODIFIED Requirements
 
 ### Requirement: Train using Ray Train and PyTorch Lightning on CPU
 The skill SHALL use Flyte's Ray integration (`RayJobConfig` from `flyteplugins.ray`) to declare a Ray cluster with 2 CPU worker nodes. The training logic SHALL use `ray.train.torch.TorchTrainer` with a PyTorch Lightning `Trainer` configured for CPU-only distributed training. All dataset and model classes SHALL be defined inside `train_loop_per_worker` to ensure correct serialization by Ray workers.
@@ -20,16 +11,7 @@ The skill SHALL use Flyte's Ray integration (`RayJobConfig` from `flyteplugins.r
 - **WHEN** a Ray worker starts
 - **THEN** it reads the dataset path from `train_loop_config` and loads the COCO dataset locally
 
-### Requirement: Output model.pt when accuracy threshold is met
-The skill SHALL save the trained model weights to `model.pt` and return its path if the evaluated mAP@0.5 is greater than or equal to `accuracy_request`. Otherwise it SHALL return `None`.
-
-#### Scenario: Accuracy met
-- **WHEN** mAP@0.5 ≥ `accuracy_request`
-- **THEN** model weights are saved to `model.pt` and the path is returned
-
-#### Scenario: Accuracy not met
-- **WHEN** mAP@0.5 < `accuracy_request`
-- **THEN** the function returns `None` and no file is saved
+## MODIFIED Requirements
 
 ### Requirement: skill.md documents the skill interface
 The skill SHALL include a `skills/roboflow_ray_train/SKILL.md` file that documents the inputs, outputs, dependencies, and invocation via `flyte run`.
@@ -37,6 +19,8 @@ The skill SHALL include a `skills/roboflow_ray_train/SKILL.md` file that documen
 #### Scenario: SKILL.md documents flyte run invocation
 - **WHEN** the skill is deployed
 - **THEN** `skills/roboflow_ray_train/SKILL.md` documents invocation as `flyte run --local skill_impl/roboflow_ray_train/roboflow_ray_train.py roboflow_ray_train --roboflow_url <url> --accuracy_request <float> --output <path>`
+
+## ADDED Requirements
 
 ### Requirement: Flyte Ray integration dependencies installed
 The project SHALL have `flyte` and `flyteplugins-ray` installed via `uv add flyte flyteplugins-ray` in the virtual environment.
