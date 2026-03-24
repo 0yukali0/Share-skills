@@ -1,4 +1,5 @@
 import os
+from glob import glob
 from typing import Dict, List
 
 import gradio as gr
@@ -6,10 +7,37 @@ import requests
 from openai import OpenAI
 from openrouter import OpenRouter
 
+
+def load_skills_index() -> str:
+    skills = []
+    for path in sorted(glob("skills/*/SKILL.md")):
+        name = description = ""
+        in_frontmatter = False
+        with open(path) as f:
+            for line in f:
+                line = line.rstrip()
+                if line == "---":
+                    in_frontmatter = not in_frontmatter
+                    continue
+                if in_frontmatter:
+                    if line.startswith("name:"):
+                        name = line.split(":", 1)[1].strip()
+                    elif line.startswith("description:"):
+                        description = line.split(":", 1)[1].strip()
+                if name and description:
+                    break
+        if name:
+            skills.append(f"- {name}: {description}")
+
+    index = "Available skills:\n" + "\n".join(skills)
+    index += "\n\nTo use a skill, first read its full details with: Execute command: cat skills/<skill_name>/SKILL.md"
+    return index
+
+
 messages: List[Dict[str, str]] = [
     {
         "role": "system",
-        "content": open("agent.md").read() + open("skill.md").read(),
+        "content": open("agent.md").read() + "\n\n" + load_skills_index(),
     }
 ]
 
