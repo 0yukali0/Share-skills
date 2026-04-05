@@ -103,9 +103,42 @@ def greet_ollama(message: str, model: str = "qwen2.5-coder:3b") -> str:
 
 def greet_claude(message: str) -> str:
     async def _run():
-        async for msg in query(prompt=message, options=ClaudeAgentOptions()):
-            if isinstance(msg, ResultMessage):
-                return msg.result
+        nonlocal message
+        while True:
+            messages.append({"role": "user", "content": message})
+
+            # Build conversation string for stateless query
+            prompt = "\n".join(
+                f"{m['role'].upper()}: {m['content']}"
+                for m in messages[1:]
+            )
+
+            res = ""
+            async for msg in query(
+                prompt=prompt,
+                options=ClaudeAgentOptions(
+                    cwd=".",
+                    system_prompt=messages[0]["content"],
+                    allowed_tools=["Read", "Write", "Bash"],
+                    max_turns=1,
+                ),
+            ):
+                print(f"[MSG type={type(msg).__name__}] {msg}")
+                if isinstance(msg, ResultMessage):
+                    res = msg.result
+
+            messages.append({"role": "assistant", "content": res})
+            print(f"[AI] {res}")
+            if res.strip().startswith("Finished:"):
+                break
+            if "Execute command:" not in res:
+                print(f"[Warning] Unexpected response: {res}")
+                break
+            command = res.strip().split("Execute command:")[1].strip()
+            command_result = os.popen(command).read()
+            print(f"[Command Result] {command_result}")
+            message = command_result
+        return res
     return anyio.run(_run)
 
 
