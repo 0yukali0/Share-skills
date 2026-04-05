@@ -6,7 +6,8 @@ import gradio as gr
 import requests
 from openai import OpenAI
 from openrouter import OpenRouter
-
+import anyio
+from claude_agent_sdk import query, ClaudeAgentOptions, ResultMessage
 
 def load_skills_index() -> str:
     skills = []
@@ -42,9 +43,9 @@ messages: List[Dict[str, str]] = [
 ]
 
 
-def call_model(message: str, model: str, provider: str = "ollama") -> str:
-    if provider == "ollama":
-        return greet_ollama(message, model)
+def call_model(message: str, model: str = "", provider: str = "claude") -> str:
+    if provider == "claude":
+        return greet_claude(message)
     elif provider == "openrouter":
         return greet_world(message, model)
     else:
@@ -100,6 +101,14 @@ def greet_ollama(message: str, model: str = "qwen2.5-coder:3b") -> str:
     unload_model(model)
     return res
 
+def greet_claude(message: str) -> str:
+    async def _run():
+        async for msg in query(prompt=message, options=ClaudeAgentOptions()):
+            if isinstance(msg, ResultMessage):
+                return msg.result
+    return anyio.run(_run)
+
+
 
 def greet_world(message: str, model: str = "minimax/minimax-m2") -> str:
     try:
@@ -114,7 +123,7 @@ def greet_world(message: str, model: str = "minimax/minimax-m2") -> str:
 
 if __name__ == "__main__":
     demo = gr.Interface(
-        fn=greet_ollama,
+        fn=greet_claude,
         inputs=["text"],
         outputs=["text"],
         api_name="predict",

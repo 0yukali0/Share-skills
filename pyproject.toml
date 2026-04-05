@@ -5,7 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "accelerate>=1.6.0",
+    "anyio>=4.12.1",
     "beautifulsoup4>=4.14.3",
+    "claude-agent-sdk>=0.1.51",
+    "diffusers>=0.33.0",
     "flyte[tui]>=2.0.9",
     "flyteplugins-ray>=2.0.10",
     "fpdf2>=2.8.7",
@@ -14,12 +18,14 @@ dependencies = [
     "openai>=2.28.0",
     "openrouter>=0.7.11",
     "pandoc>=2.4",
+    "pillow>=11.2.1",
     "python-pptx>=1.0.2",
     "pytorch-lightning>=2.6.1",
     "ray[all]>=2.54.0",
     "requests>=2.32.5",
     "torch>=2.10.0",
     "torchvision>=0.25.0",
+    "transformers>=4.51.0",
 ]
 
 [dependency-groups]
