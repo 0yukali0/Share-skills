@@ -1,0 +1,9 @@
+{
+  "name": "hello-world-plugin",
+  "description": "示範用 plugin，包含一個 skill 與一個 command，展示 Claude plugin 基本結構",
+  "version": "1.0.6",
+  "author": {
+    "name": "demo",
+    "email": "demo@example.com"
+  }
+}
