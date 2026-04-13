@@ -8,11 +8,6 @@
   },
   "plugins": [
     {
-      "name": "hello-world-plugin",
-      "description": "示範用 plugin，包含 skill 與 command，展示 Claude plugin 基本結構",
-      "source": "./hello-world-plugin"
-    },
-    {
       "name": "create-mindmap-plugin",
       "description": "從文字輸入產生 Mermaid mindmap 語法並轉換為 PNG 心智圖圖片",
       "source": "./create-mindmap-plugin"
