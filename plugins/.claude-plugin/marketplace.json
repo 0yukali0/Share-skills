@@ -14,13 +14,8 @@
     },
     {
       "name": "taipei-open-data-list",
-      "description": "查詢台北市開放資料集清單，支援依主題分類篩選，回傳資料集名稱清單",
+      "description": "查詢台北市及新北市開放資料集清單，支援依城市與主題分類篩選，回傳資料集名稱清單",
       "source": "./taipei-open-data-list"
-    },
-    {
-      "name": "new-taipei-open-data-list",
-      "description": "查詢新北市開放資料集清單，支援依主題分類篩選，回傳資料集名稱清單",
-      "source": "./new-taipei-open-data-list"
     }
   ]
 }

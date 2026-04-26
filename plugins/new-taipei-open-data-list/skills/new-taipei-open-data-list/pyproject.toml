@@ -1,9 +1,0 @@
-[project]
-name = "new-taipei-open-data-list"
-version = "0.1.0"
-description = "Query New Taipei City Open Data dataset list, optionally filtered by category"
-requires-python = ">=3.13"
-dependencies = [
-    "flyte>=2.0.9",
-    "httpx>=0.27.0",
-]
