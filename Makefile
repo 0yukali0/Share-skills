@@ -1,4 +1,4 @@
-PHONY: lint
+.PHONY: lint
 lint:
 	make -C plugins lint
 

@@ -1,10 +1,8 @@
 import shutil
-import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 from create_mindmap import gen_mindmap_mermaid, mermaid_to_png
 
 
@@ -74,8 +72,10 @@ class TestMermaidToPng:
         output_file = str(tmp_path / "test.png")
         mock_run = MagicMock(return_value=MagicMock(returncode=0))
 
-        with patch("shutil.which", return_value="/usr/bin/mmdc"), \
-             patch("subprocess.run", mock_run):
+        with (
+            patch("shutil.which", return_value="/usr/bin/mmdc"),
+            patch("subprocess.run", mock_run),
+        ):
             result = mermaid_to_png("mindmap\n  root\n    A\n    B", output_file)
 
         mock_run.assert_called_once()
@@ -88,8 +88,10 @@ class TestMermaidToPng:
         output_file = str(tmp_path / "out.png")
         mock_run = MagicMock(return_value=MagicMock(returncode=0))
 
-        with patch("shutil.which", return_value="/usr/bin/mmdc"), \
-             patch("subprocess.run", mock_run):
+        with (
+            patch("shutil.which", return_value="/usr/bin/mmdc"),
+            patch("subprocess.run", mock_run),
+        ):
             mermaid_to_png("mindmap\n  test", output_file)
 
         args = mock_run.call_args[0][0]
@@ -97,10 +99,7 @@ class TestMermaidToPng:
         assert "-b" in args
         assert "transparent" in args
 
-    @pytest.mark.skipif(
-        shutil.which("mmdc") is None,
-        reason="mmdc not installed"
-    )
+    @pytest.mark.skipif(shutil.which("mmdc") is None, reason="mmdc not installed")
     def test_real_png_generation(self, tmp_path):
         output_file = str(tmp_path / "real_test.png")
         mermaid_code = gen_mindmap_mermaid("Test", ["A", "B", "C"])

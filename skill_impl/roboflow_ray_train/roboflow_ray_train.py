@@ -28,12 +28,13 @@ import torch
 from flyteplugins.ray import RayJobConfig, WorkerNodeConfig
 from torch.utils.data import DataLoader, Dataset
 
-
 # ── Flyte task environment ────────────────────────────────────────────────────
 
 train_env = flyte.TaskEnvironment(
     name="roboflow-ray-detector",
-    image=flyte.Image.from_debian_base(name="ray", python_version=(3, 13)).with_pip_packages(
+    image=flyte.Image.from_debian_base(
+        name="ray", python_version=(3, 13)
+    ).with_pip_packages(
         "torch>=2.0.0",
         "torchvision>=0.15.0",
         "pytorch-lightning>=2.0.0",
@@ -43,7 +44,7 @@ train_env = flyte.TaskEnvironment(
         "requests>=2.32.0",
         "numpy>=1.24.0",
         "pandas",
-        "pyarrow"
+        "pyarrow",
     ),
     resources=flyte.Resources(
         cpu=("2", "4"),
@@ -232,7 +233,7 @@ def roboflow_ray_train(
     import os
 
     import ray
-    from ray.train import Checkpoint, ScalingConfig
+    from ray.train import ScalingConfig
     from ray.train.torch import TorchTrainer
 
     with tempfile.TemporaryDirectory() as tmp_dir:

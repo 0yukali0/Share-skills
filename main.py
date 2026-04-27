@@ -2,12 +2,13 @@ import os
 from glob import glob
 from typing import Dict, List
 
+import anyio
 import gradio as gr
 import requests
+from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
 from openai import OpenAI
 from openrouter import OpenRouter
-import anyio
-from claude_agent_sdk import query, ClaudeAgentOptions, ResultMessage
+
 
 def load_skills_index() -> str:
     skills = []
@@ -101,6 +102,7 @@ def greet_ollama(message: str, model: str = "qwen2.5-coder:3b") -> str:
     unload_model(model)
     return res
 
+
 def greet_claude(message: str) -> str:
     async def _run():
         nonlocal message
@@ -109,8 +111,7 @@ def greet_claude(message: str) -> str:
 
             # Build conversation string for stateless query
             prompt = "\n".join(
-                f"{m['role'].upper()}: {m['content']}"
-                for m in messages[1:]
+                f"{m['role'].upper()}: {m['content']}" for m in messages[1:]
             )
 
             res = ""
@@ -139,8 +140,8 @@ def greet_claude(message: str) -> str:
             print(f"[Command Result] {command_result}")
             message = command_result
         return res
-    return anyio.run(_run)
 
+    return anyio.run(_run)
 
 
 def greet_world(message: str, model: str = "minimax/minimax-m2") -> str:

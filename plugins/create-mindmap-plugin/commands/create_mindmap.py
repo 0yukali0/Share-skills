@@ -1,6 +1,6 @@
 import json
-import subprocess
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -91,8 +91,9 @@ def create_mindmap(topic: str, items: str, output_path: str):
     result = mermaid_to_png(mermaid_code, output_path)
     print(f"PNG saved to: {result}")
 
+
 create_mindmap(
     topic="Python學習",
     items='["基礎語法", "資料結構", {"Web框架": ["Flask", "Django", "FastAPI"]}, {"資料科學": ["Pandas", "NumPy"]}]',
-    output_path="python_mindmap.png"
+    output_path="python_mindmap.png",
 )
