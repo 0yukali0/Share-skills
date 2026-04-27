@@ -32,7 +32,7 @@ version: 3.0.0
 
 ```bash
 cd plugins/taipei-open-data-list/commands
-uv sync --locked && source .venv/bin/activate
+UV_PROJECT_ENVIRONMENT=/tmp/.taipei-open-data-list-venv uv sync --locked && source /tmp/.taipei-open-data-list-venv/bin/activate
 ```
 
 **查詢全部（兩市）：**
@@ -62,7 +62,7 @@ flyte run --local wf.py describe_wf --urls '{"new-taipei": "https://data.ntpc.go
 
 ```bash
 cd plugins/taipei-open-data-list/commands
-uv sync --locked && source .venv/bin/activate && flyte run --local wf.py links_wf
+UV_PROJECT_ENVIRONMENT=/tmp/.taipei-open-data-list-venv uv sync --locked && source /tmp/.taipei-open-data-list-venv/bin/activate && flyte run --local wf.py links_wf
 ```
 
 **僅查台北市：**

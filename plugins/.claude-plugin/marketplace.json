@@ -16,6 +16,11 @@
       "name": "taipei-open-data-list",
       "description": "查詢台北市及新北市開放資料集清單，支援依城市與主題分類篩選，回傳資料集名稱清單",
       "source": "./taipei-open-data-list"
+    },
+    {
+      "name": "data-visualizer",
+      "description": "從使用者提供的資料 URL（CSV/JSON）自動分析欄位、選擇圖表類型，以 Gradio gr.HTML + Plotly 產生互動式視覺化，並透過 Playwright 驗證結果",
+      "source": "./data-visualizer"
     }
   ]
 }
